@@ -1,0 +1,11 @@
+from Utils import *
+filenames = ["road-roadNet-CA.mtx"]
+for filename in filenames:
+    print("----------------------------------------------------------------------")
+    print("For {0}".format(filename))
+    filepath = os.path.join("/Users/scott/Data/networkScience/origin",filename)
+    name = filename.split(".",1)[0]
+    save_path = "/Users/scott/Data/networkScience/pickle"
+    G=read_file(filepath,"Network Repository") #["SNAP", "Network Repository"]
+    # get_basic_information(G,name,save_path)
+    save_graph(G,save_path,name)
