@@ -9,7 +9,7 @@ import os
 
 # ["road-chesapeake.mtx","road-euroroad.edges","road-usroads","road-roadNet-CA","road-germany-osm.mtx"]
 
-filenames = ["road-euroroad.edges"]
+filenames = ["road-usroads.mtx","road-roadNet-CA.mtx"]
 
 dicts = []
 for filename in filenames:
@@ -18,9 +18,9 @@ for filename in filenames:
     filepath = os.path.join("/Users/scott/Data/networkScience/origin",filename)
     name = filename.split(".",1)[0]
     save_path = "/Users/scott/Data/networkScience/pickle"
-    # G=read_file(filepath,"Network Repository") #["SNAP", "Network Repository"]
+    G=read_file(filepath,"Network Repository") #["SNAP", "Network Repository"]
     # get_basic_information(G,name,save_path)
-    # add_features(G,name,save_path)
+    add_betweenness(G,name,save_path)
     # save_graph(G,save_path,name)
     # print("------------------Results-------------------")
     path = os.path.join(save_path, name + ".pkl")
@@ -29,8 +29,15 @@ for filename in filenames:
     dicts.append(dict)
 # plot_degree_distribution(dicts,save_path,filenames,"bar")
 # plot_degree_distribution(dicts,save_path,filenames,"log")
+# plot_betweenness_distribution(dicts,save_path,filenames)
+# plot_degree_betweenness_fig(dicts,save_path,filenames)
+# plot_clustering_distribution(dicts,save_path,filenames,flag="log")
+# plot_degree_clustering_fig(dicts,save_path,filenames)
 # plot_degree_correlations(dicts,save_path,filenames)
-plot_betweenness_distribution(dicts,save_path,filenames)
+
+
+
+
 # # Diameter
 # ll =  nx.diameter(G)
 # # Shortest Path

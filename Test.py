@@ -25,5 +25,9 @@ import numpy as np
 #     dict = pickle.load(open(path, 'rb'))
 #     dicts.append(dict)
 # plot_betweenness_distribution(dicts,save_path,filenames)
-
-print(np.log(np.e))
+import time
+for n in [10,100,1000,100000]:
+    G=nx.fast_gnp_random_graph(n, 1./n)
+    current_time = time.time()
+    a=nx.betweenness_centrality(G)
+    print(time.time()-current_time)
