@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Zhiyuan Gao
+"""
+"""Functions for analysing network"""
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -205,6 +211,20 @@ def add_betweenness(G,name,savepath):
     with open(os.path.join(savepath, name + ".pkl"),
               'wb') as fo:  # 将数据写入pkl文件
         pickle.dump(dict, fo)
+def add_average_shortest_path_length(G,name,savepath):
+    dict = pickle.load(open(os.path.join(savepath, name + ".pkl"), 'rb'))
+    s = time.time()
+    dict["ASP"] = ("Average Shortest Path",[])
+    for C in (G.subgraph(c).copy() for c in nx.connected_components(G)):
+        dict["ASP"][1].append(nx.average_shortest_path_length(C))
+    e1 = time.time()
+    print("ASP:{0}".format(format(e1-s,".2f")))
+    print(dict["ASP"])
+
+    # with open(os.path.join(savepath, name + ".pkl"),
+    #           'wb') as fo:  # 将数据写入pkl文件
+    #     pickle.dump(dict, fo)
+
 def show_basic_information(dict):
     # Number of nodes
     # Number of edges
@@ -223,14 +243,9 @@ def show_basic_information(dict):
     # Numer of triangles
     print("Average clustering coefficient:{0}".format(sum([dict["C"][1][k] for k in dict["C"][1]])/dict["NN"][1]))
     print("Numer of triangles:{0}".format(sum([dict["T"][1][node] for node in dict["T"][1]])/3))
-def calc_betweenness(G,k):
-    s = time.time()
-    b = nx.betweenness_centrality(G,k)
-    e1 = time.time()
-    print(len(b))
-    print(e1-s)
+
 def plot_degree_distribution(dicts,savepath,names,flag="bar"):
-    color = ["orange","yellow","green","deepskyblue"]
+    color = ["rosybrown","orange","yellow","green","deepskyblue"]
 
     fig, ax1 = plt.subplots()
     ax1.set_xlabel("k")
@@ -258,7 +273,7 @@ def plot_degree_distribution(dicts,savepath,names,flag="bar"):
     plt.savefig(os.path.join(savepath,"_".join(names)+"_digree_distribution_"+flag+".png"))
     print("Finish plotting {0}".format("_".join(names)+"_digree_distribution_"+flag+".png"))
 def plot_betweenness_distribution(dicts,savepath,names):
-    color = ["rosybrown","orange","yellow","green","deepskyblue"]
+    color = ["rosybrown","orange","yellow","green","deepskyblue"]#
 
     for idx,(name,dict) in enumerate(zip(names,dicts)):
         fig, ax1 = plt.subplots()
@@ -287,24 +302,6 @@ def plot_betweenness_distribution(dicts,savepath,names):
         plt.legend()
         fig.savefig(os.path.join(savepath, name + "_betweenness_distribution.png"))
         print("Finish plotting {0}".format(name+"_betweenness_distribution.png"))
-def plot_degree_betweenness_fig(dicts,savepath,names):
-    color = ["rosybrown","orange","yellow","green","deepskyblue"]
-
-    for idx,(name,dict) in enumerate(zip(names,dicts)):
-        fig, ax1 = plt.subplots()
-        ax1.set_xlabel("k")
-        ax1.set_ylabel("b")
-        x=[]
-        y=[]
-        for key in dict["B"][1]:
-            x.append(dict["D"][1][key])
-            y.append(dict["B"][1][key])
-        ax1.scatter(x,y,label = name,color = color[idx])
-        # ax1.set_xscale("log")
-        # ax1.set_yscale("log")
-        plt.legend()
-        fig.savefig(os.path.join(savepath, name + "_degree_betweenness.png"))
-        print("Finish plotting {0}".format(name+"_degree_betweenness.png"))
 def plot_clustering_distribution(dicts,savepath,names,flag = "bar"):
     color = ["rosybrown","orange","yellow","green","deepskyblue"]
     for idx,(name,dict) in enumerate(zip(names,dicts)):
@@ -347,6 +344,61 @@ def plot_clustering_distribution(dicts,savepath,names,flag = "bar"):
         plt.legend()
         fig.savefig(os.path.join(savepath, name + "_clustering_distribution_"+flag+".png"))
         print("Finish plotting {0}".format(name+"_clustering_distribution_"+flag+".png"))
+def plot_triangle_distribution(dicts,savepath,names,flag="bar"):
+    color = ["rosybrown","orange","yellow","green","deepskyblue"]#,
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel("T(Number of triangles)")
+    ax1.set_ylabel(r"$P_T$",)
+    width = 0.9 / len(names)
+
+    # ax2 = ax1.twinx()
+    # ax2.set_ylabel(r"$P_k$", color='tab:red')  # we already handled the x-label with ax1
+    # ax2.set_yscale("log")
+    # ax2.tick_params(axis='y', labelcolor='tab:red')
+
+    for idx,(name,dict) in enumerate(zip(names,dicts)):
+        triangle_list = []
+        for key in dict["T"][1]:
+            triangle_list.append(dict["T"][1][key])
+        triangle_list.sort()
+        triangle_histogram = np.zeros(triangle_list[-1]+1)
+        for num in triangle_list:
+            triangle_histogram[num] = triangle_histogram[num] + 1.0
+        p = triangle_histogram/sum(triangle_histogram)
+        if flag == "bar":
+            ax1.bar([i + idx * width for i in range(len(p))], p, width=width, label=name,color = color[idx])
+        elif flag == "log":
+            ax1.set_yscale("log")
+            ax1.bar([i + idx * width for i in range(len(p))], p, width=width, label=name,color = color[idx])
+
+        # ax2.plot([i for i in range(len(p))],p,color = 'red',label=name)
+
+    fig.tight_layout()
+    # plt.title("Digree Distribution")
+    plt.legend()
+    plt.savefig(os.path.join(savepath,"_".join(names)+"_triangle_distribution_"+flag+".png"))
+    print("Finish plotting {0}".format("_".join(names)+"_triangle_distribution_"+flag+".png"))
+
+
+def plot_degree_betweenness_fig(dicts,savepath,names):
+    color = ["yellow","green","deepskyblue"]#"rosybrown","orange",
+
+    for idx,(name,dict) in enumerate(zip(names,dicts)):
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel("k")
+        ax1.set_ylabel("b")
+        x=[]
+        y=[]
+        for key in dict["B"][1]:
+            x.append(dict["D"][1][key])
+            y.append(dict["B"][1][key])
+        ax1.scatter(x,y,label = name,color = color[idx])
+        # ax1.set_xscale("log")
+        # ax1.set_yscale("log")
+        plt.legend()
+        fig.savefig(os.path.join(savepath, name + "_degree_betweenness.png"))
+        print("Finish plotting {0}".format(name+"_degree_betweenness.png"))
 def plot_degree_clustering_fig(dicts,savepath,names):
     color = ["rosybrown","orange","yellow","green","deepskyblue"]
 
@@ -365,6 +417,45 @@ def plot_degree_clustering_fig(dicts,savepath,names):
         plt.legend()
         fig.savefig(os.path.join(savepath, name + "_degree_clustering.png"))
         print("Finish plotting {0}".format(name+"_degree_clustering.png"))
+def plot_degree_triangle_fig(dicts,savepath,names):
+    color = ["rosybrown","orange","yellow","green","deepskyblue"]
+
+    for idx,(name,dict) in enumerate(zip(names,dicts)):
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel("k")
+        ax1.set_ylabel("T")
+        x=[]
+        y=[]
+        for key in dict["T"][1]:
+            x.append(dict["D"][1][key])
+            y.append(dict["T"][1][key])
+        ax1.scatter(x,y,label = name,color = color[idx])
+        # ax1.set_xscale("log")
+        # ax1.set_yscale("log")
+        plt.legend()
+        fig.savefig(os.path.join(savepath, name + "_degree_triangle.png"))
+        print("Finish plotting {0}".format(name+"_degree_triangle.png"))
+
+def plot_degree_correlations(dicts,savepath,names):
+    color = ["YlOrRd", "Oranges", "YlOrBr", "YlGn", "GnBu"]
+    for idx, (name, dict) in enumerate(zip(names, dicts)):
+        k_num = len(dict["DH"][1])-1
+        labels = np.arange(k_num)+1
+        e_num=len(dict["E"][1])
+        print("E_num:{0}".format(e_num))
+        fig, ax = plt.subplots(figsize=(100, 100), dpi=80)
+
+        prob = np.zeros((k_num, k_num))
+        for i, j in dict["E"][1]:
+            prob[dict["D"][1][i] - 1][dict["D"][1][j] - 1] = prob[dict["D"][1][i] - 1][dict["D"][1][j] - 1] + 1
+        prob = prob / len(dict["E"][1])
+        im, cbar = heatmap(np.flip(prob,0), row_labels=np.flip(labels,0), col_labels=labels, ax=ax,
+                           cmap=color[idx], cbarlabel="degree corrilation")
+        fig.tight_layout()
+        plt.show()
+        # fig.savefig(os.path.join(savepath, name + "_degree_correlations.png"))
+        # print("Finish plotting {0}".format(name+"_degree_correlations.png"))
+
 def save_graph(graph,savepath,name):
     #initialze Figure
     plt.figure(num=None, figsize=(500, 500), dpi=80)
@@ -400,22 +491,7 @@ def save_graph(graph,savepath,name):
     pylab.close()
     del fig
 
-def plot_degree_correlations(dicts,savepath,names):
-    color = ["YlOrRd", "Oranges", "YlOrBr", "YlGn", "GnBu"]
-    for idx, (name, dict) in enumerate(zip(names, dicts)):
-        k_num = len(dict["DH"][1])-1
-        labels = np.arange(k_num)+1
-        e_num=len(dict["E"][1])
-        print("E_num:{0}".format(e_num))
-        fig, ax = plt.subplots(figsize=(100, 100), dpi=80)
 
-        prob = np.zeros((k_num, k_num))
-        for i, j in dict["E"][1]:
-            prob[dict["D"][1][i] - 1][dict["D"][1][j] - 1] = prob[dict["D"][1][i] - 1][dict["D"][1][j] - 1] + 1
-        prob = prob / len(dict["E"][1])
-        im, cbar = heatmap(np.flip(prob,0), row_labels=np.flip(labels,0), col_labels=labels, ax=ax,
-                           cmap=color[idx], cbarlabel="degree corrilation")
-        fig.tight_layout()
-        plt.show()
-        # fig.savefig(os.path.join(savepath, name + "_degree_correlations.png"))
-        # print("Finish plotting {0}".format(name+"_degree_correlations.png"))
+def print_triangles(savepath,name):
+    dict = pickle.load(open(os.path.join(savepath, name + ".pkl"), 'rb'))
+    print(dict["T"])
