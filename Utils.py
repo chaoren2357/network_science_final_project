@@ -12,7 +12,6 @@ import time
 import pickle
 import os
 
-
 def heatmap(data, row_labels, col_labels, ax=None,cbar_kw={}, cbarlabel="", **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
@@ -461,18 +460,18 @@ def save_graph(graph,savepath,name):
     plt.figure(num=None, figsize=(500, 500), dpi=80)
     plt.axis('off')
     fig = plt.figure(1)
-    pos = nx.kamada_kawai_layout(graph)
-    # pos = nx.spring_layout(graph)
+    # pos = nx.kamada_kawai_layout(graph)
+    pos = nx.spring_layout(graph)
     s = time.time()
     nx.draw_networkx_nodes(graph,pos,node_size=100000)
     e1 = time.time()
     print("Finish nodes drawing in {0}s, total {1}".format(e1-s,e1-s))
 
-    nx.draw_networkx_edges(graph,pos,width=10)
+    nx.draw_networkx_edges(graph,pos,width=10) #
     e2 = time.time()
     print("Finish edges drawing in {0}s, total {1}".format(e2-e1,e2-s))
 
-    nx.draw_networkx_labels(graph,pos)
+    nx.draw_networkx_labels(graph,pos,font_size=300)
     e3 = time.time()
     print("Finish labels drawing in {0}s, total {1}".format(e3-e2,e3-s))
 
@@ -490,6 +489,102 @@ def save_graph(graph,savepath,name):
 
     pylab.close()
     del fig
+
+def save_double_graph(G,Gc,savepath,name):
+    #initialze Figure
+    plt.figure(num=None, figsize=(500, 500), dpi=80)
+    plt.axis('off')
+    fig = plt.figure(1)
+    # pos = nx.kamada_kawai_layout(G)
+    pos = nx.spring_layout(G)
+    print(pos)
+    s = time.time()
+    nx.draw_networkx_nodes(G,pos,node_size=10000)
+    e1 = time.time()
+    print("Finish nodes drawing in {0}s, total {1}".format(e1-s,e1-s))
+
+    nx.draw_networkx_edges(G,pos,width=10) #
+    e2 = time.time()
+    print("Finish edges drawing in {0}s, total {1}".format(e2-e1,e2-s))
+
+    # nx.draw_networkx_labels(G,pos,font_size=300)
+    e3 = time.time()
+    print("Finish labels drawing in {0}s, total {1}".format(e3-e2,e3-s))
+
+    cut = 1.05
+    xmax = cut * max(xx for xx, yy in pos.values())
+    ymax = cut * max(yy for xx, yy in pos.values())
+    xmin = cut * min(xx for xx, yy in pos.values())
+    ymin = cut * min(yy for xx, yy in pos.values())
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+
+    plt.savefig(os.path.join(savepath,name+".pdf"),bbox_inches="tight")
+    e4 = time.time()
+    print("Finish saving in {0}s, total {1}".format(e4-e3,e4-s))
+
+    pylab.close()
+    del fig
+
+
+    ### 2
+    plt.figure(num=None, figsize=(500, 500), dpi=80)
+    # pos = nx.kamada_kawai_layout(graph)
+    s = time.time()
+    nx.draw_networkx_nodes(Gc,pos,node_size=10000)
+    e1 = time.time()
+    print("Finish nodes drawing in {0}s, total {1}".format(e1-s,e1-s))
+
+    nx.draw_networkx_edges(Gc,pos,width=10) #
+    e2 = time.time()
+    print("Finish edges drawing in {0}s, total {1}".format(e2-e1,e2-s))
+
+    # nx.draw_networkx_labels(Gc,pos,font_size=300)
+    e3 = time.time()
+    print("Finish labels drawing in {0}s, total {1}".format(e3-e2,e3-s))
+
+    cut = 1.05
+    xmax = cut * max(xx for xx, yy in pos.values())
+    ymax = cut * max(yy for xx, yy in pos.values())
+    xmin = cut * min(xx for xx, yy in pos.values())
+    ymin = cut * min(yy for xx, yy in pos.values())
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+
+    plt.savefig(os.path.join(savepath,name+"2.pdf"),bbox_inches="tight")
+    e4 = time.time()
+    print("Finish saving in {0}s, total {1}".format(e4-e3,e4-s))
+
+    pylab.close()
+
+
+def reduce_edges(G):
+    Gc = G.copy()
+    cycles = nx.cycle_basis(Gc)
+    point_set = cycles[0]
+    point_set.append(point_set[0])
+    point_degree = [(p,Gc.degree(p)) for p in point_set]
+    edges = []
+    N = len(point_set)
+    for i in range(N-1):
+        edges.append((point_degree[i][0],point_degree[i+1][0],point_degree[i][1]+point_degree[i+1][1]))
+    edges.sort(key=lambda x: x[2])
+    Gc.remove_edge(edges[0][0],edges[0][1])
+    return Gc
+
+def lifeline(G):
+    Gc = G.copy()
+    count=1
+    while True:
+        try:
+            Gc = reduce_edges(Gc)
+            print("Reduce {0}".format(count))
+            count = count +1
+            print("Now G NN:{0}, NE:{1}".format(Gc.number_of_nodes(),Gc.number_of_edges()))
+        except:
+            break
+    return Gc
+
 
 
 def print_triangles(savepath,name):
