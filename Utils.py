@@ -223,7 +223,19 @@ def add_average_shortest_path_length(G,name,savepath):
     # with open(os.path.join(savepath, name + ".pkl"),
     #           'wb') as fo:  # 将数据写入pkl文件
     #     pickle.dump(dict, fo)
+def add_neighbors(G,name,savepath):
+    dict = pickle.load(open(os.path.join(savepath, name + ".pkl"), 'rb'))
+    s = time.time()
+    neighbors = []
+    for node in G.nodes:
+        neighbors.append((node,nx.neighbors(G,node)))
+    dict["NEI"] = ("Neighbors",neighbors)
+    e1 = time.time()
+    print("NEI:{0}".format(format(e1-s,".2f")))
 
+    with open(os.path.join(savepath, name + ".pkl"),
+              'wb') as fo:  # 将数据写入pkl文件
+        pickle.dump(dict, fo)
 def show_basic_information(dict):
     # Number of nodes
     # Number of edges
@@ -404,7 +416,7 @@ def plot_degree_clustering_fig(dicts,savepath,names):
     for idx,(name,dict) in enumerate(zip(names,dicts)):
         fig, ax1 = plt.subplots()
         ax1.set_xlabel("k")
-        ax1.set_ylabel("b")
+        ax1.set_ylabel("c")
         x=[]
         y=[]
         for key in dict["C"][1]:
@@ -414,6 +426,7 @@ def plot_degree_clustering_fig(dicts,savepath,names):
         # ax1.set_xscale("log")
         # ax1.set_yscale("log")
         plt.legend()
+
         fig.savefig(os.path.join(savepath, name + "_degree_clustering.png"))
         print("Finish plotting {0}".format(name+"_degree_clustering.png"))
 def plot_degree_triangle_fig(dicts,savepath,names):
@@ -434,6 +447,61 @@ def plot_degree_triangle_fig(dicts,savepath,names):
         plt.legend()
         fig.savefig(os.path.join(savepath, name + "_degree_triangle.png"))
         print("Finish plotting {0}".format(name+"_degree_triangle.png"))
+def plot_degree_knn_fig(dicts,savepath,names,flag = "save"): # Not finished yet
+    color = ["rosybrown","orange","yellow","green","deepskyblue"]
+
+    for idx,(name,dict) in enumerate(zip(names,dicts)):
+        if flag == "save":
+            degree_list = list(dict["D"][1])
+            degree_list.sort(key=lambda x:x[0])
+            neighbor_list = list(dict["NEI"][1])
+            neighbor_list.sort(key=lambda x:x[0])
+
+            k_num = len(dict["DH"][1]) - 1
+            k = np.arange(k_num) + 1
+            knn = np.zeros((k_num,1))
+            knn_num = np.zeros((k_num,1))
+            for point,degree in degree_list:
+                for nei_point in neighbor_list[point-1][1]:
+                    knn[degree-1]  = knn[degree-1] + degree_list[nei_point-1][1]
+                    knn_num[degree-1] = knn_num[degree-1] + 1
+            knn_true=[]
+            k_true=[]
+            for i in range(k_num):
+                if knn_num[i] != 0:
+                    knn_true.append(knn[i]/knn_num[i])
+                    k_true.append(i+1)
+            dict = {"knn":knn_true,"k":{k_true}}
+            print("Saving {0}".format(name + "_knn.pkl"))
+            with open(os.path.join(savepath, name + "_knn.pkl"),
+                      'wb') as fo:  # 将数据写入pkl文件
+                pickle.dump(dict, fo)
+
+        elif flag == "plot":
+            dict = pickle.load(open(os.path.join(savepath, name + ".pkl"), 'rb'))
+            if name == "road-chesapeake":
+                num =-0.3758
+            elif name == "road-euroroad":
+                num = 0.1267
+            elif name == "road-usroads":
+                num = -0.0569
+            elif name == "road-roadNet-CA":
+                num = 0.1206
+            elif name == "road-germany-osm":
+                num = 0.07429
+            k_true = dict["k"]
+            knn_true = dict["knn"]
+            fig, ax1 = plt.subplots()
+            ax1.set_xlabel("k")
+            ax1.set_ylabel("knn")
+            ax1.set_xscale("log")
+            ax1.set_yscale("log")
+            ax1.scatter(k_true,knn_true,label = name,color = color[idx])
+            ax1.plot(k_true,pow(k_true,num),color ="black")
+            plt.legend()
+            fig.savefig(os.path.join(savepath, name + "_degree_knn.png"))
+            print("Finish plotting {0}".format(name + "_degree_knn.png"))
+
 
 def plot_degree_correlations(dicts,savepath,names):
     color = ["YlOrRd", "Oranges", "YlOrBr", "YlGn", "GnBu"]
@@ -445,9 +513,12 @@ def plot_degree_correlations(dicts,savepath,names):
         fig, ax = plt.subplots(figsize=(100, 100), dpi=80)
 
         prob = np.zeros((k_num, k_num))
+        degree_list = list(dict["D"][1])
+        degree_list.sort(key=lambda x:x[0])
         for i, j in dict["E"][1]:
-            prob[dict["D"][1][i] - 1][dict["D"][1][j] - 1] = prob[dict["D"][1][i] - 1][dict["D"][1][j] - 1] + 1
-        prob = prob / len(dict["E"][1])
+            prob[degree_list[i-1][1]-1][degree_list[j-1][1]-1] = prob[degree_list[i-1][1]-1][degree_list[j-1][1]-1]+ 1
+        prob = prob + prob.T
+        prob = prob /2 /len(dict["E"][1])
         im, cbar = heatmap(np.flip(prob,0), row_labels=np.flip(labels,0), col_labels=labels, ax=ax,
                            cmap=color[idx], cbarlabel="degree corrilation")
         fig.tight_layout()

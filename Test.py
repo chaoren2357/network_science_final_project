@@ -3,14 +3,13 @@ import matplotlib.pyplot as plt
 import random
 from Utils import *
 import numpy as np
-G = nx.Graph()
-for i in range(100):
-    for j in range(100):
-        r = random.random()
-        if i != j and r>0.5:
-            G.add_edge(i,j)
-
-filenames = ["road-euroroad.edges"]#,"road-euroroad.edges","road-usroads.mtx","road-roadNet-CA.mtx","road-germany-osm.mtx"]
+# G = nx.Graph()
+# G.add_edge(1,2)
+# G.add_edge(2,3)
+# G.add_edge(1,3)
+# nx.draw(G,with_labels=True)
+# plt.show()
+filenames = ["road-usroads.mtx"]#,"road-euroroad.edges","road-usroads.mtx","road-roadNet-CA.mtx","road-germany-osm.mtx"]
 dicts = []
 for filename in filenames:
     print("----------------------------------------------------------------------")
@@ -22,17 +21,13 @@ for filename in filenames:
     # add_features(G,name,save_path)
     path = os.path.join(save_path, name + ".pkl")
 
-    Gc = lifeline(G)
-    print("NN:{0}, NE:{1}".format(G.number_of_nodes(),G.number_of_edges()))
-    print("NN:{0}, NE:{1}".format(Gc.number_of_nodes(),Gc.number_of_edges()))
-    save_double_graph(G,Gc,save_path,name="catch")
+
     # save_graph(G,save_path,name="try")
     # save_graph(Gc, save_path, name="try2")
 
-    # dict = pickle.load(open(path, 'rb'))
+    dict = pickle.load(open(path, 'rb'))
     # add_average_shortest_path_length(G,name,save_path)
-    # dicts.append(dict)
-
+    dicts.append(dict)
 
 
 
